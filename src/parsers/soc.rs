@@ -1,3 +1,5 @@
+use std::str::Lines;
+
 use crate::outputs::SOCEigenvector;
 use crate::outputs::SOCState;
 
@@ -30,7 +32,6 @@ fn tokenize_state(line: &str) -> SOCMatrixToken {
 
 fn tokenize_component(line: &str) -> SOCMatrixToken {
     let mut parts = line.split(":");
-    dbg!(&parts);
     let mut vals = parts
         .next()
         .unwrap()
@@ -94,3 +95,28 @@ pub fn parse(lines: &Vec<&str>) -> Vec<SOCState> {
     let tokens = tokenize(lines);
     to_states(&tokens)
 }
+
+pub fn parse_soc(lines: &mut Lines) -> Vec<SOCState> {
+    let mut tokens: Vec<SOCMatrixToken> = Vec::new();
+    let mut started = false;
+    loop {
+        let candidate = lines.next();
+        if candidate.is_none() {
+            break;
+        }
+        let next = candidate.unwrap();
+        if started {
+            let token = line_to_token(next);
+            match token {
+                SOCMatrixToken::EndOfTable => {break;}
+                _ => tokens.push(token)
+            }
+        }
+        match next.trim_start() {
+            "Eigenvectors of the SOC matrix:" => {lines.next(); started = true;},
+            _ => (),
+        }
+    }
+    to_states(&tokens)
+}
+

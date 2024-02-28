@@ -1,4 +1,13 @@
 
+## API
+
+start with filename as input,
+return a dict with the different sections as keys
+
+
+while reading a file, read until the start of a particular section is identified
+once identified, pass the buffer to an underlying parser that reads its section
+once complete, return to the caller
 
 ## Strategy
 
