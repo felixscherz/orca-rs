@@ -1,7 +1,8 @@
 use std::str::Lines;
 
 use crate::outputs::SOCEigenvector;
-use crate::outputs::SOCState;
+use crate::outputs::SOCElement;
+use crate::outputs::SOCMatrix;
 
 #[derive(Debug)]
 pub enum SOCMatrixToken {
@@ -60,20 +61,20 @@ pub fn tokenize(lines: &Vec<&str>) -> Vec<SOCMatrixToken> {
     lines.iter().map(|x| line_to_token(x)).collect()
 }
 
-fn to_states(tokens: &Vec<SOCMatrixToken>) -> Vec<SOCState> {
-    let mut states: Vec<SOCState> = Vec::new();
+fn to_states(tokens: &Vec<SOCMatrixToken>) -> Vec<SOCEigenvector> {
+    let mut states: Vec<SOCEigenvector> = Vec::new();
     for token in tokens.iter() {
         match token {
             SOCMatrixToken::Header => (),
             SOCMatrixToken::State(n, energy) => {
-                states.push(SOCState {
+                states.push(SOCEigenvector {
                     n: n.parse().unwrap(),
                     energy: energy.parse().unwrap(),
-                    eigenvectors: Vec::new(),
+                    elements: Vec::new(),
                 });
             }
             SOCMatrixToken::Component(weight, real, imag, root, spin, ms) => {
-                let eigenvec = SOCEigenvector {
+                let eigenvec = SOCElement {
                     weight: weight.parse().unwrap(),
                     real: real.parse().unwrap(),
                     imag: imag.parse().unwrap(),
@@ -82,7 +83,7 @@ fn to_states(tokens: &Vec<SOCMatrixToken>) -> Vec<SOCState> {
                     ms: ms.parse().unwrap(),
                 };
                 if let Some(last_state) = &mut states.last_mut() {
-                    last_state.eigenvectors.push(eigenvec);
+                    last_state.elements.push(eigenvec);
                 }
             }
             SOCMatrixToken::EndOfTable => break,
@@ -91,12 +92,7 @@ fn to_states(tokens: &Vec<SOCMatrixToken>) -> Vec<SOCState> {
     states
 }
 
-pub fn parse(lines: &Vec<&str>) -> Vec<SOCState> {
-    let tokens = tokenize(lines);
-    to_states(&tokens)
-}
-
-pub fn parse_soc(lines: &mut Lines) -> Vec<SOCState> {
+pub fn parse_soc(lines: &mut Lines) -> SOCMatrix {
     let mut tokens: Vec<SOCMatrixToken> = Vec::new();
     let mut started = false;
     loop {
@@ -108,15 +104,21 @@ pub fn parse_soc(lines: &mut Lines) -> Vec<SOCState> {
         if started {
             let token = line_to_token(next);
             match token {
-                SOCMatrixToken::EndOfTable => {break;}
-                _ => tokens.push(token)
+                SOCMatrixToken::EndOfTable => {
+                    break;
+                }
+                _ => tokens.push(token),
             }
         }
         match next.trim_start() {
-            "Eigenvectors of the SOC matrix:" => {lines.next(); started = true;},
+            "Eigenvectors of the SOC matrix:" => {
+                lines.next();
+                started = true;
+            }
             _ => (),
         }
     }
-    to_states(&tokens)
+    SOCMatrix {
+        eigenvectors: to_states(&tokens),
+    }
 }
-

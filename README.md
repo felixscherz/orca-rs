@@ -1,3 +1,11 @@
+# ORCA output parser
+
+## How it works
+
+1. the `parse` function takes a filename and reads it to a `String`
+2. the top-level parser reads line-by-line until a subsection can be identified
+3. if a subsection is identified a sub-parser is invoked which reads the iterator until the section completes
+4. resume at the top-level to identify and parse other sections
 
 ## API
 

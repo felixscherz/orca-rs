@@ -5,14 +5,10 @@ use std::{fs, path::Path};
 use pyo3::prelude::*;
 
 #[pyfunction]
-fn parse(filename: &str, py: Python) -> PyResult<Vec<PyObject>> {
+fn parse(filename: &str, py: Python) -> PyResult<PyObject> {
     let content = fs::read_to_string(Path::new(&filename)).unwrap();
-
-    // let mut iterator = content.lines();
-    // while !iterator.next().unwrap().starts_with("Eigenvectors") {}
-    // iterator.next();
-    let states = parsers::parse(content).unwrap();
-    Ok(states.iter().map(|x| x.to_object(py)).collect())
+    let states = parsers::parse(content);
+    Ok(states.to_object(py))
 }
 
 #[pymodule]
