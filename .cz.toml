@@ -4,3 +4,4 @@ tag_format = "$version"
 version_scheme = "pep440"
 version_provider = "cargo"
 major_version_zero = true
+bump_message = "$new_version"
