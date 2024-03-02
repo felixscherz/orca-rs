@@ -1,23 +1,4 @@
-from typing import TypedDict
+from orca_rs.outputs.tddft import TDDFTOutput
 
-class SOCElement(TypedDict):
-    weight: float
-    real: float
-    imag: float
-    root: int
-    spin: int
-    ms: int
-
-class SOCEigenvector(TypedDict):
-    n: int
-    energy: float
-    elements: list[SOCElement]
-
-class SOCMatrix(TypedDict):
-    eigenvectors: list[SOCEigenvector]
-
-class OrcaOutput(TypedDict):
-    soc_matrix: SOCMatrix
-
-def parse(filename: str) -> OrcaOutput:
+def parse_tddft(filename: str) -> TDDFTOutput:
     """Parse orca output file"""
