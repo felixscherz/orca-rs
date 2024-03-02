@@ -54,14 +54,6 @@ fn tokenize_component(line: &str) -> SOCMatrixToken {
     SOCMatrixToken::Component(weight, real, imag, root, spin, ms)
 }
 
-// should this take a buffer to continonusly read?
-// or a large string reference?
-// should be able to read the entire file, without slicing beforehand
-// tokenizer should tokenize every line on a higher level
-pub fn tokenize(lines: &Vec<&str>) -> Vec<SOCMatrixToken> {
-    lines.iter().map(|x| line_to_token(x)).collect()
-}
-
 fn to_states(tokens: &Vec<SOCMatrixToken>) -> Vec<SOCEigenvector> {
     let mut states: Vec<SOCEigenvector> = Vec::new();
     for token in tokens.iter() {
