@@ -10,17 +10,17 @@ pub enum Token {
     Contribution(String, String, String, Vec<String>),
     TableDivider,
     EmptyLine,
-    SecionDivider,
+    SectionDivider,
 }
 
 fn line_to_token(line: &str) -> Token {
     match line {
         x if x.is_empty() => Token::EmptyLine,
-        x if x.contains(
-            "------------------------------------------------------------------------------",
+        x if x.starts_with(
+            "----------------------------",
         ) =>
         {
-            Token::SecionDivider
+            Token::SectionDivider
         }
         x if x.contains("--------") => Token::TableDivider,
         x => {
@@ -41,59 +41,61 @@ fn line_to_token(line: &str) -> Token {
 fn tokens_to_orbitals(tokens: &Vec<Token>) -> Vec<Orbital> {
     let mut iterator = tokens.iter();
     let mut orbitals: Vec<Orbital> = Vec::new();
-    match iterator.next() {
-        None => (),
-        Some(Token::SecionDivider) => (),
-        Some(Token::EmptyLine) => (),
-        Some(Token::TableHeader(nrs)) => {
-            // start of a table -> parse three lines, then a divider, then orbitals until empty
-            // line
-            // have to deal with 6 orbitals at  a time here
-            let mut new_orbitals: Vec<Orbital> = Vec::new();
-            if let Some(Token::TableHeader(energies)) = iterator.next() {
-                if let Some(Token::TableHeader(occupations)) = iterator.next() {
-                    (0..nrs.len()).for_each(|i| {
-                        let orbital = Orbital {
-                            orbital_nr: nrs.get(i).unwrap().parse().unwrap(),
-                            energy: energies.get(i).unwrap().parse().unwrap(),
-                            occupation: occupations.get(i).unwrap().parse().unwrap(),
-                            contributions: Vec::new(),
-                        };
-                        new_orbitals.push(orbital);
-                    });
+    loop {
+        match iterator.next() {
+            None => break,
+            Some(Token::SectionDivider) => break,
+            Some(Token::EmptyLine) => (),
+            Some(Token::TableHeader(nrs)) => {
+                // start of a table -> parse three lines, then a divider, then orbitals until empty
+                // line
+                // have to deal with 6 orbitals at  a time here
+                let mut new_orbitals: Vec<Orbital> = Vec::new();
+                if let Some(Token::TableHeader(energies)) = iterator.next() {
+                    if let Some(Token::TableHeader(occupations)) = iterator.next() {
+                        (0..nrs.len()).for_each(|i| {
+                            let orbital = Orbital {
+                                orbital_nr: nrs.get(i).unwrap().parse().unwrap(),
+                                energy: energies.get(i).unwrap().parse().unwrap(),
+                                occupation: occupations.get(i).unwrap().parse().unwrap(),
+                                contributions: Vec::new(),
+                            };
+                            new_orbitals.push(orbital);
+                        });
+                    };
                 };
-            };
-            if let Some(Token::TableDivider) = iterator.next() {
-            } else {
-                panic!("Table divider expected");
-            }
-            // orbitals are parsed now go one until an emptyLine token is encountered
-            loop {
-                match iterator.next() {
-                    Some(Token::EmptyLine) => break,
-                    Some(Token::Contribution(atom_nr, element, orbital_type, contributions)) => {
-                        new_orbitals
-                            .iter_mut()
-                            .enumerate()
-                            .map(|(i, x)| {
-                                x.contributions.push(Contribution {
-                                    atom_nr: atom_nr.parse().unwrap(),
-                                    element: element.to_string(),
-                                    orbital_type: orbital_type.to_string(),
-                                    contribution: contributions.get(i).unwrap().parse().unwrap(),
-                                });
-                            })
-                            .count();
-                    }
-                    x => panic!("Unexpected token {:?}", x),
+                if let Some(Token::TableDivider) = iterator.next() {
+                } else {
+                    panic!("Table divider expected");
                 }
+                // orbitals are parsed now go one until an emptyLine token is encountered
+                loop {
+                    match iterator.next() {
+                        Some(Token::EmptyLine) => break,
+                        Some(Token::Contribution(atom_nr, element, orbital_type, contributions)) => {
+                            new_orbitals
+                                .iter_mut()
+                                .enumerate()
+                                .map(|(i, x)| {
+                                    x.contributions.push(Contribution {
+                                        atom_nr: atom_nr.parse().unwrap(),
+                                        element: element.to_string(),
+                                        orbital_type: orbital_type.to_string(),
+                                        contribution: contributions.get(i).unwrap().parse().unwrap(),
+                                    });
+                                })
+                                .count();
+                        }
+                        x => panic!("Unexpected token {:?}", x),
+                    }
+                }
+                orbitals.extend(new_orbitals);
             }
-            orbitals.extend(new_orbitals);
+            Some(Token::Contribution(_, _, _, _)) => {
+                panic!("Encountered Contribution")
+            }
+            Some(Token::TableDivider) => panic!("Encountered Divider"),
         }
-        Some(Token::Contribution(_, _, _, _)) => {
-            panic!("Encountered Contribution")
-        }
-        Some(Token::TableDivider) => panic!("Encountered Divider"),
     }
     orbitals
 }
@@ -110,7 +112,8 @@ pub fn parse(lines: &mut Lines) -> Vec<Orbital> {
         if started {
             let token = line_to_token(next);
             match token {
-                Token::SecionDivider => {
+                Token::SectionDivider => {
+                    tokens.push(token);
                     break;
                 }
                 _ => tokens.push(token),
