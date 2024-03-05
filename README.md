@@ -7,9 +7,9 @@
 ## Usage
 
 ```python
-from orca_rs import parse
+from orca_rs import parse_casscf, parse_tddft
 
-output = parse("orca-results.out")
+output = parse_tddft("orca-tddft-results.out")
 
 import pprint
 pprint.pprint(output)
