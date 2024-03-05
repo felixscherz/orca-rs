@@ -14,4 +14,4 @@ class Orbital(TypedDict):
 
 
 class CASSCFOutput(TypedDict):
-    orbital_compositions: list[Orbital]
+    orbital_contributions: list[Orbital]
