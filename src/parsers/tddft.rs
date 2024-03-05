@@ -25,10 +25,9 @@ fn line_to_token(line: &str) -> SOCMatrixToken {
 }
 
 fn tokenize_state(line: &str) -> SOCMatrixToken {
-    let mut parts = line.split_whitespace();
-    parts.next();
-    let state_no = parts.next().unwrap().replace(":", "");
-    let energy = parts.next().unwrap().to_string();
+    let mut parts = line.split(":");
+    let state_no = parts.next().unwrap().replace("STATE", "").trim().to_string();
+    let energy = parts.next().unwrap().trim().to_string();
     SOCMatrixToken::State(state_no, energy)
 }
 
